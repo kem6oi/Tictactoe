@@ -1,0 +1,68 @@
+.home-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 2rem;
+  padding: 1rem;
+}
+
+.title {
+  font-size: 3rem;
+  color: var(--tomato-red);
+  text-shadow: 4px 4px 0 var(--sunshine-yellow);
+  text-align: center;
+  animation: bounceIn 0.8s ease-out;
+}
+
+.home-card {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.input-group label {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.2rem;
+}
+
+.home-input {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.5rem;
+  padding: 0.8rem;
+  border: 4px solid var(--text-dark);
+  border-radius: 12px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: #636e72;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 2px dashed #b2bec3;
+}
+
+.divider:not(:empty)::before {
+  margin-right: .5em;
+}
+
+.divider:not(:empty)::after {
+  margin-left: .5em;
+}
