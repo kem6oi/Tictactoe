@@ -1,4 +1,4 @@
-import { Room } from "./types";
+import { Room, Tier } from "./types";
 import { createInitialGameState } from "./gameLogic";
 
 const rooms = new Map<string, Room>();
@@ -18,11 +18,11 @@ export const generateRoomCode = (): string => {
   return code;
 };
 
-export const createRoom = (code: string): Room => {
+export const createRoom = (code: string, tier: Tier = null): Room => {
   const room: Room = {
     code,
     players: [],
-    gameState: createInitialGameState(),
+    gameState: createInitialGameState(tier),
     messages: [],
     lastActivity: Date.now(),
     rematchRequested: new Set()

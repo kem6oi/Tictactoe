@@ -1,13 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@400;500;700&display=swap');
 
 :root {
-  --sunshine-yellow: #FFD93D;
-  --grass-green: #6BCB77;
-  --tomato-red: #FF6B6B;
-  --cobalt-blue: #4D96FF;
-  --warm-cream: #FFF8E7;
-  --chalk-white: #FFFFFF;
-  --text-dark: #2D3436;
+  --bg-dark: #0f0f14;
+  --card-bg: #1a1a24;
+  --text-light: #f0e6d3;
+  --text-dim: #888;
+  --text-muted: #666;
+  --border-color: #2a2a3a;
+
+  --mild-color: #FFD700;
+  --spicy-color: #FF8C42;
+  --nasty-color: #E8A0BF;
+
+  --accent-color: var(--nasty-color);
 }
 
 * {
@@ -17,78 +22,134 @@
 }
 
 body {
-  font-family: 'Nunito', sans-serif;
-  background-color: var(--warm-cream);
-  background-image:
-    linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px);
-  background-size: 20px 20px;
-  color: var(--text-dark);
-  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='5' fill='yellow'/><path d='m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z'/></svg>") 12 12, auto;
+  font-family: 'DM Sans', sans-serif;
+  background-color: var(--bg-dark);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  color: var(--text-light);
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  overflow-x: hidden;
 }
 
-h1, h2, h3, .heading-font {
-  font-family: 'Fredoka One', cursive;
+h1, h2, h3, .playfair {
+  font-family: 'Playfair Display', serif;
 }
 
 button {
-  font-family: 'Fredoka One', cursive;
+  font-family: 'DM Sans', sans-serif;
   cursor: pointer;
-  border: none;
-  border-radius: 12px;
-  padding: 12px 24px;
-  transition: transform 0.1s, box-shadow 0.1s;
-}
-
-button:active {
-  transform: scale(0.95);
+  transition: all 0.2s ease;
 }
 
 .primary-button {
-  background-color: var(--tomato-red);
-  color: white;
-  box-shadow: 0 6px 0 #d63031;
+  background: transparent;
+  border: 1px solid var(--accent-color);
+  color: var(--accent-color);
+  font-size: 16px;
+  padding: 14px 36px;
+  borderRadius: 100px;
+  letter-spacing: 0.5px;
 }
 
-.primary-button:hover {
-  background-color: #ff7675;
+.primary-button:hover:not(:disabled) {
+  background: rgba(232, 160, 191, 0.1);
+  transform: translateY(-2px);
 }
 
-.secondary-button {
-  background-color: var(--cobalt-blue);
-  color: white;
-  box-shadow: 0 6px 0 #0984e3;
-}
-
-.secondary-button:hover {
-  background-color: #74b9ff;
+.primary-button:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .card {
-  background: white;
-  border: 4px solid var(--text-dark);
-  border-radius: 24px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
   padding: 2rem;
-  box-shadow: 8px 8px 0 var(--text-dark);
 }
 
-.flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Animations */
+@keyframes popIn {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
-@keyframes pop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
+@keyframes winPulse {
+  from { filter: drop-shadow(0 0 4px var(--accent-color)); }
+  to { filter: drop-shadow(0 0 16px var(--accent-color)); }
 }
 
-@keyframes bounceIn {
-  0% { transform: scale(0); opacity: 0; }
-  60% { transform: scale(1.1); opacity: 1; }
-  100% { transform: scale(1); }
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes floatUp {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(-150px); opacity: 0; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes drawLine {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes drawCircle {
+  to { stroke-dashoffset: 0; }
+}
+
+.popIn { animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.winPulse { animation: winPulse 0.8s ease-in-out infinite alternate; }
+
+/* Custom Cursor for Typewriter */
+.cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background-color: var(--text-light);
+  margin-left: 2px;
+  animation: blink 0.7s infinite;
+  vertical-align: middle;
+}
+
+/* Tier Specific Glows */
+.spicy-glow {
+  box-shadow: 0 0 30px rgba(255, 140, 66, 0.2);
+  border-color: var(--spicy-color) !important;
+}
+
+.spicy-btn-pulse {
+  animation: spicyPulse 2s infinite;
+}
+
+@keyframes spicyPulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 140, 66, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(255, 140, 66, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 140, 66, 0); }
+}
+
+.nasty-glow {
+  box-shadow: 0 0 40px rgba(232, 160, 191, 0.3);
+  border-color: var(--nasty-color) !important;
+}
+
+/* Background Grain Intensity */
+.nasty-grain::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.nasty-spotlight {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0.7) 100%);
+  pointer-events: none;
+  z-index: 999;
 }

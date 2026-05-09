@@ -3,8 +3,8 @@ import http from "http";
 import { Server } from "socket.io";
 import cors from "cors";
 import { createRoom, generateRoomCode, getRoom, findRoomByPlayerId } from "./roomManager";
-import { checkWinner, createInitialGameState } from "./gameLogic";
-import { ChatMessage, Symbol } from "./types";
+import { checkWinner, createInitialGameState, getRandomDare } from "./gameLogic";
+import { ChatMessage, Symbol, Tier, DareStatus } from "./types";
 
 const app = express();
 app.use(cors());
@@ -27,6 +27,13 @@ io.on("connection", (socket) => {
     socket.join(code);
     socket.emit("room_created", { code, symbol: "X" });
     console.log(`Room created: ${code} by ${socket.id}`);
+  });
+
+  socket.on("set_tier", ({ code, tier }: { code: string, tier: Tier }) => {
+    const room = getRoom(code);
+    if (!room) return;
+    room.gameState.tier = tier;
+    io.to(code).emit("game_update", room.gameState);
   });
 
   socket.on("join_room", ({ code }: { code: string }) => {
@@ -71,9 +78,38 @@ io.on("connection", (socket) => {
     const { winner, winningIndices } = checkWinner(gameState.board);
     gameState.winner = winner;
     gameState.winningIndices = winningIndices;
+
+    if (winner && winner !== "draw") {
+      const loser = winner === "X" ? "O" : "X";
+      gameState.dareFor = loser;
+      gameState.currentDare = getRandomDare(gameState.tier);
+    }
+
     gameState.currentTurn = player.symbol === "X" ? "O" : "X";
 
     io.to(room.code).emit("game_update", gameState);
+  });
+
+  socket.on("dare_status_update", ({ status }: { status: DareStatus }) => {
+    const room = findRoomByPlayerId(socket.id);
+    if (!room) return;
+
+    const { gameState } = room;
+    gameState.dareStatus = status;
+
+    if (status === "done" && gameState.winner && gameState.winner !== "draw") {
+      gameState.scores[gameState.winner] += 1;
+    } else if (status === "chickened" && gameState.dareFor) {
+      gameState.scores[`${gameState.dareFor}chicken` as keyof typeof gameState.scores] += 1;
+    }
+
+    io.to(room.code).emit("game_update", gameState);
+  });
+
+  socket.on("send_reaction", ({ emoji }: { emoji: string }) => {
+    const room = findRoomByPlayerId(socket.id);
+    if (!room) return;
+    io.to(room.code).emit("new_reaction", { emoji, id: Date.now() + Math.random() });
   });
 
   socket.on("send_message", ({ text }: { text: string }) => {
@@ -99,7 +135,7 @@ io.on("connection", (socket) => {
     room.rematchRequested.add(socket.id);
 
     if (room.rematchRequested.size === room.players.length) {
-      room.gameState = createInitialGameState();
+      room.gameState = createInitialGameState(room.gameState.tier, room.gameState.scores);
       room.rematchRequested.clear();
       io.to(room.code).emit("rematch_ready", { board: room.gameState.board });
       io.to(room.code).emit("game_update", room.gameState);
@@ -122,8 +158,6 @@ io.on("connection", (socket) => {
         text: "Your opponent left the game 👋",
         timestamp: Date.now()
       });
-      // We keep the room for 30 mins even if players disconnect,
-      // as per requirements "rooms auto-delete after 30 minutes of inactivity"
     }
     console.log("User disconnected:", socket.id);
   });
