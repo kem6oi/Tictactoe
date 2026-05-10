@@ -2,9 +2,10 @@ import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import cors from "cors";
-import { createRoom, generateRoomCode, getRoom, findRoomByPlayerId } from "./roomManager";
+import { createRoom, generateRoomCode, getRoom, findRoomByPlayerId, initRooms } from "./roomManager";
 import { checkWinner, createInitialGameState, getRandomDare } from "./gameLogic";
-import { ChatMessage, Symbol, Tier, DareStatus } from "./types";
+import { ChatMessage, Symbol, Tier, DareStatus, Room } from "./types";
+import { saveRoomToDB } from "./db";
 
 const app = express();
 app.use(cors());
@@ -17,13 +18,18 @@ const io = new Server(server, {
   }
 });
 
+const saveRoom = (room: Room) => {
+  saveRoomToDB(room);
+};
+
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
 
-  socket.on("create_room", () => {
+  socket.on("create_room", async () => {
     const code = generateRoomCode();
-    const room = createRoom(code);
+    const room = await createRoom(code);
     room.players.push({ id: socket.id, symbol: "X" });
+    await saveRoomToDB(room);
     socket.join(code);
     socket.emit("room_created", { code, symbol: "X" });
     console.log(`Room created: ${code} by ${socket.id}`);
@@ -33,6 +39,7 @@ io.on("connection", (socket) => {
     const room = getRoom(code);
     if (!room) return;
     room.gameState.tier = tier;
+    saveRoom(room);
     io.to(code).emit("game_update", room.gameState);
   });
 
@@ -49,6 +56,7 @@ io.on("connection", (socket) => {
 
     const symbol: Symbol = "O";
     room.players.push({ id: socket.id, symbol });
+    saveRoom(room);
     socket.join(code);
     socket.emit("room_joined", { code, symbol, board: room.gameState.board });
 
@@ -87,6 +95,7 @@ io.on("connection", (socket) => {
 
     gameState.currentTurn = player.symbol === "X" ? "O" : "X";
 
+    saveRoom(room);
     io.to(room.code).emit("game_update", gameState);
   });
 
@@ -103,6 +112,7 @@ io.on("connection", (socket) => {
       gameState.scores[`${gameState.dareFor}chicken` as keyof typeof gameState.scores] += 1;
     }
 
+    saveRoom(room);
     io.to(room.code).emit("game_update", gameState);
   });
 
@@ -125,6 +135,7 @@ io.on("connection", (socket) => {
       timestamp: Date.now()
     };
     room.messages.push(message);
+    saveRoom(room);
     io.to(room.code).emit("new_message", message);
   });
 
@@ -137,9 +148,11 @@ io.on("connection", (socket) => {
     if (room.rematchRequested.size === room.players.length) {
       room.gameState = createInitialGameState(room.gameState.tier, room.gameState.scores);
       room.rematchRequested.clear();
+      saveRoom(room);
       io.to(room.code).emit("rematch_ready", { board: room.gameState.board });
       io.to(room.code).emit("game_update", room.gameState);
     } else {
+        saveRoom(room);
         // Optionally notify other player that a rematch was requested
         socket.to(room.code).emit("new_message", {
             sender: room.players.find(p => p.id === socket.id)?.symbol,
@@ -164,6 +177,8 @@ io.on("connection", (socket) => {
 });
 
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+initRooms().then(() => {
+  server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 });
