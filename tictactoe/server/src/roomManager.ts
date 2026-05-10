@@ -1,8 +1,29 @@
 import { Room, Tier } from "./types";
 import { createInitialGameState } from "./gameLogic";
+import { initDB, saveRoomToDB, deleteRoomFromDB, getAllRoomsFromDB } from "./db";
 
 const rooms = new Map<string, Room>();
 const ROOM_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+
+export const initRooms = async () => {
+  await initDB();
+  const dbRooms = await getAllRoomsFromDB();
+  dbRooms.forEach(room => {
+    rooms.set(room.code, room);
+  });
+
+  // Periodically clean up expired rooms
+  setInterval(() => {
+    const now = Date.now();
+    for (const [code, room] of rooms.entries()) {
+      if (now - room.lastActivity >= ROOM_TIMEOUT) {
+        rooms.delete(code);
+        deleteRoomFromDB(code);
+        console.log(`Room ${code} expired`);
+      }
+    }
+  }, 5 * 60 * 1000); // Check every 5 minutes
+};
 
 export const generateRoomCode = (): string => {
   let code: string;
@@ -18,7 +39,7 @@ export const generateRoomCode = (): string => {
   return code;
 };
 
-export const createRoom = (code: string, tier: Tier = null): Room => {
+export const createRoom = async (code: string, tier: Tier = null): Promise<Room> => {
   const room: Room = {
     code,
     players: [],
@@ -28,15 +49,7 @@ export const createRoom = (code: string, tier: Tier = null): Room => {
     rematchRequested: new Set()
   };
   rooms.set(code, room);
-
-  // Set expiration
-  setTimeout(() => {
-    const currentRoom = rooms.get(code);
-    if (currentRoom && Date.now() - currentRoom.lastActivity >= ROOM_TIMEOUT) {
-      rooms.delete(code);
-      console.log(`Room ${code} expired`);
-    }
-  }, ROOM_TIMEOUT);
+  await saveRoomToDB(room);
 
   return room;
 };
@@ -45,12 +58,14 @@ export const getRoom = (code: string): Room | undefined => {
   const room = rooms.get(code);
   if (room) {
     room.lastActivity = Date.now();
+    saveRoomToDB(room);
   }
   return room;
 };
 
 export const deleteRoom = (code: string) => {
   rooms.delete(code);
+  deleteRoomFromDB(code);
 };
 
 export const findRoomByPlayerId = (playerId: string): Room | undefined => {

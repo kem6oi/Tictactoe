@@ -9,7 +9,7 @@ const InviteCode: React.FC<InviteCodeProps> = ({ code }) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(code);
+    navigator.clipboard.writeText(window.location.href);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -21,7 +21,7 @@ const InviteCode: React.FC<InviteCodeProps> = ({ code }) => {
       alignItems: 'center',
       gap: '0.8rem'
     }}>
-      <span style={{ fontSize: '0.8rem', letterSpacing: 2, color: 'var(--text-muted)' }}>INVITE CODE</span>
+      <span style={{ fontSize: '0.8rem', letterSpacing: 2, color: 'var(--text-muted)' }}>SHARE LINK</span>
       <div
         onClick={handleCopy}
         style={{

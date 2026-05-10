@@ -18,15 +18,25 @@ const App: React.FC = () => {
   const [opponentJoined, setOpponentJoined] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reactions, setReactions] = useState<Reaction[]>([]);
+  const [isJoining, setIsJoining] = useState(false);
 
   useEffect(() => {
     socket.connect();
+
+    // Check for room in URL
+    const params = new URLSearchParams(window.location.search);
+    const roomFromUrl = params.get('room');
+    if (roomFromUrl) {
+      setIsJoining(true);
+      socket.emit('join_room', { code: roomFromUrl });
+    }
 
     const onRoomCreated = ({ code, symbol }: { code: string, symbol: Symbol }) => {
       setRoomCode(code);
       setMySymbol(symbol);
       setView('lobby');
       setError(null);
+      window.history.pushState({}, '', "?room=" + code);
     };
 
     const onRoomJoined = ({ code, symbol }: { code: string, symbol: Symbol }) => {
@@ -35,6 +45,8 @@ const App: React.FC = () => {
       setOpponentJoined(true);
       setError(null);
       setView('lobby');
+      setIsJoining(false);
+      window.history.pushState({}, '', "?room=" + code);
     };
 
     const onPlayerJoined = () => {
@@ -60,6 +72,7 @@ const App: React.FC = () => {
 
     const onError = ({ message }: { message: string }) => {
       setError(message);
+      setIsJoining(false);
     };
 
     socket.on('room_created', onRoomCreated);
@@ -126,12 +139,13 @@ const App: React.FC = () => {
       setGameState(null);
       setMessages([]);
       setOpponentJoined(false);
+      window.history.pushState({}, '', window.location.pathname);
   };
 
   if (view === 'home') {
     return (
       <div style={{ display:'flex', flexDirection:'column', alignItems:'center', width:'100%' }}>
-        <HomeScreen onCreateGame={handleCreateGame} onJoinGame={handleJoinGame} />
+        <HomeScreen onCreateGame={handleCreateGame} onJoinGame={handleJoinGame} isJoining={isJoining} />
         {error && <div style={{ color: 'var(--nasty-color)', textAlign: 'center', fontWeight: 'bold', marginTop: '1rem' }}>{error}</div>}
       </div>
     );
